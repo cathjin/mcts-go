@@ -1,0 +1,12 @@
+[build-system]
+# Specifies the build system and tools required to build the project
+requires = ["setuptools", "wheel"]  # Build dependencies
+build-backend = "setuptools.build_meta"  # Setuptools will be used as the build backend
+
+[tool.setuptools.packages.find]
+# Tell setuptools where to find your Python packages
+where = ["src"]  # Look for packages inside the 'src' folder
+
+[project]
+name = "mcts-go"  # Name of your project
+version = "0.1"   # Version of your project

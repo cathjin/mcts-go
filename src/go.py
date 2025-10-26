@@ -4,6 +4,7 @@ class Go:
         self.num_cols = num_cols
         self.board = [["O"]*num_cols for _ in range(num_rows)]
         self.prev_state = [["O"]*num_cols for _ in range(num_rows)]
+        self.curr_player = "B"
 
     def print_board(self):
         for i in range(self.num_rows):
@@ -16,26 +17,25 @@ class Go:
                     if (i != self.num_rows - 1):
                         print("|   " * self.num_cols)
 
-    def play_game(self):
-        while(True):
+    def play_move(self, player, move_x, move_y):
+        # while(True):
             # self.prev_board = self.board # need to make deep copy
 
-            move_x = input("Black's Move Row: ")
-            move_y = input("Black's Move Column: ")
-            self.board[int(move_x) - 1][int(move_y) - 1] = "B"
+        if(player == "B"):
+            # move_x = input("Black's Move Row: ")
+            # move_y = input("Black's Move Column: ")
+            self.board[9 - int(move_x)][ord(move_y) - ord('A')] = "B"
             self.check_all_captured("W", "B")
             self.print_board()
-
-
-            move_x = input("White's Move Row: ")
-            move_y = input("White's Move Column: ")
-            self.board[int(move_x) - 1][int(move_y) - 1] = "W"
+        else:
+            # move_x = input("White's Move Row: ")
+            # move_y = input("White's Move Column: ")
+            self.board[int(move_x)][int(move_y)] = "W"
             self.check_all_captured("B", "W")
             self.print_board()
 
-            self.score()
-            # if self.prev_board == self.board:
-                # break # change later
+        # if self.prev_board == self.board:
+            # break # change later
 
 
     def check_all_captured(self, player, opp):
@@ -46,25 +46,30 @@ class Go:
                     indices.append((i, j))  # row, col
         captured = []
         for x,y in indices:
-            if self.check_captured(player, opp, x,y):
+            checked = []
+            if self.check_captured(player, opp, x,y, checked):
                 captured.append((x,y))
+            
         print("Captured", captured)
         for x,y in captured:
             self.board[x][y] = "O"
         return captured
 
     # needs reworking
-    def check_captured(self, player, opp, x, y, checked = []):
+    def check_captured(self, player, opp, x, y, checked):
         neighbour_indices = self.get_neighbours_indices(x,y)
         neighbour_symbols = self.get_neighbours_symbol(neighbour_indices)
         if "O" in neighbour_symbols:
-            return False
-        else:
+            return False 
+        elif player in neighbour_symbols:
+            checked.append((x,y))
+            result = True
             for i in range(len(neighbour_symbols)):
                 if neighbour_symbols[i] == player and neighbour_indices[i] not in checked:
                     x1, y1 = neighbour_indices[i]
-                    checked.append((x,y))
-                    return self.check_captured(player, opp, x1, y1)
+                    result = result and self.check_captured(player, opp, x1, y1, checked)
+            return result
+        else:
             return True
 
 
@@ -121,6 +126,7 @@ class Go:
                     else:
                         symbols.add(neighbour_symbols[i])
             return points, symbols
+        
         for i in range(self.num_rows - 1):
             for j in range(self.num_cols - 1):
                 if self.board[i][j] == "B":
@@ -130,13 +136,9 @@ class Go:
                 else:
                     count, symbols = score_area(i, j)
                     if len(symbols) == 2:
-                        print (symbols)
                         continue
                     elif "B" in symbols:
                         black_score += count
                     elif "W" in symbols:
                         white_score += count
-        print("BLACK SCORE: ", black_score)
-        print("WHITE SCORE: ", white_score)
-game = Go(9,9)
-game.play_game()
+        return white_score, black_score # change later
