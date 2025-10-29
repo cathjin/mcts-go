@@ -1,5 +1,6 @@
 from go import Go
 from mcts_node import MCTSNode
+import math
 
 def get_input():
     valid = False
@@ -25,7 +26,7 @@ def play_game():
             print(9 - int(move_x), move_y)
             
         else:
-            move_x, move_y = mcts_search(game, iterations = 10000)
+            move_x, move_y = mcts_search(game)
             mcts_move_y = chr(ord('A') + move_y)
             if mcts_move_y == "I":
                 mcts_move_y = "J"
@@ -33,13 +34,13 @@ def play_game():
         game.play_move(game.curr_player, move_x, move_y)
         game.curr_player = "W" if game.curr_player == "B" else "B"
 
-def mcts_search(root_state, iterations=10000):
+def mcts_search(root_state, iterations=100):
     root = MCTSNode(root_state)
 
     for i in range(iterations): # how much to look ahead by?
         node = root
 
-        while(node.children != []):
+        while(node.children != [] and node.untried_actions == []):
             node = node.best_child()
 
         # Expansion
@@ -51,7 +52,14 @@ def mcts_search(root_state, iterations=10000):
 
         # Backpropagation
         node.backpropagate(score)
+    print(len(root.children))
+    for child in root.children:
+        print (child.action, child.score/child.visits)
+    print (root.best_child(c=0).action, root.best_child(c=0).score/root.best_child(c=0).visits)
+    
     return root.best_child(c=0).action  # Return best move
 
 if __name__ == "__main__":
     play_game()
+
+    # putting pieces down so that you get captured???
