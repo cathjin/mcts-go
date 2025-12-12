@@ -1,7 +1,6 @@
 from go import Go
 from mcts_node import MCTSNode
-import math
-
+    
 def get_input():
     valid = False
     move_x = input("Black move x: ")
@@ -34,7 +33,7 @@ def play_game():
         game.play_move(game.curr_player, move_x, move_y)
         game.curr_player = "W" if game.curr_player == "B" else "B"
 
-def mcts_search(root_state, iterations=100):
+def mcts_search(root_state, iterations=8000):
     root = MCTSNode(root_state)
 
     for i in range(iterations): # how much to look ahead by?
@@ -56,7 +55,6 @@ def mcts_search(root_state, iterations=100):
     for child in root.children:
         print (child.action, child.score/child.visits)
     print (root.best_child(c=0).action, root.best_child(c=0).score/root.best_child(c=0).visits)
-    
     return root.best_child(c=0).action  # Return best move
 
 if __name__ == "__main__":

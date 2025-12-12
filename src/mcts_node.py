@@ -48,16 +48,16 @@ class MCTSNode:
     
     def rollout(self):
         state = copy.deepcopy(self.game_state)
-        for i in range(10000): # how many...
+        for i in range(1000): # how many... if its from one state surely like 100 is good enough
             actions = self.get_actions()
             if actions:
-                move_x, move_y = random.choice(actions)
+                move_x, move_y = random.choice(actions) # idt this is good enough... should i MCTS vs MCTS in rollouts??? tbh i think this needs to be replaced with neural net...
                 state.board[move_x][move_y] = state.curr_player
                 state.curr_player = "B" if state.curr_player == "W" else "W"
         white_score, black_score = state.score()
          # want to compare to black?
-        # return white_score/(NUM_COLS*NUM_ROWS)
-        return white_score
+        return white_score/(NUM_COLS*NUM_ROWS/2)
+        # return white_score
         # return (white_score - black_score)
         # return (white_score - black_score)/(NUM_COLS*NUM_ROWS)
         
@@ -67,4 +67,4 @@ class MCTSNode:
         if self.parent:
             self.parent.backpropagate(score)
     
-    
+# if current score > max, resign!

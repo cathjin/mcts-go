@@ -24,7 +24,8 @@ class Go:
         if(player == "B"):
             # move_x = input("Black's Move Row: ")
             # move_y = input("Black's Move Column: ")
-            self.board[9 - int(move_x)][ord(move_y) - ord('A')] = "B"
+            # self.board[9 - int(move_x)][ord(move_y) - ord('A')] = "B"
+            self.board[int(move_x)][int(move_y)] = "B"
             self.check_all_captured("W", "B")
             self.print_board()
         else:
