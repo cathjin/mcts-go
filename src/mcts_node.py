@@ -1,7 +1,10 @@
 import random
 import copy
-import math
+import torch
+import numpy as np 
+
 from go import Go
+from neural_network import NeuralNetwork
 
 NUM_COLS = 9
 NUM_ROWS = 9
@@ -10,61 +13,74 @@ class MCTSNode:
     def __init__(self, game_state : Go, action = None, parent = None):
         self.game_state = game_state
         self.action = action
+        self.untried_actions = self.get_actions()
 
         self.parent = parent
         self.children = []
 
+        self.turn_number = game_state.turn_number + 1
+
+
         self.visits = 0
-        self.score = 0
-        self.untried_actions = self.get_actions()
-    
+        self.action_val = 0
+        self.prior_prob = 0
+        self.value = 0
+
+    # remove possibility for returning moves that are captured + ko
     def get_actions(self):
         actions = []
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
                 if(self.game_state.board[i][j] == "O"):
-                    # self.game_state.board[i][j] = "W"
-                    # if(not self.game_state.check_captured("W", "B", i, j, [])):
                     actions.append((i,j))
-                    # self.game_state.board[i][j] = "O"
-
         return actions
-        # doesn't consider ko
     
     def best_child(self, c=1.4):
         return max(self.children, key=lambda child:
-                (child.score / child.visits) +
-                c * math.sqrt(math.log(self.visits) / child.visits))
+                child.action_val + c*child.prior_prob/(1 + child.visits))
 
     def expand(self):
-        action = random.choice(self.untried_actions)
-        self.untried_actions.remove(action)
-        new_state = copy.deepcopy(self.game_state)
-        new_state.board[action[0]][action[1]] = new_state.curr_player
-        child = MCTSNode(new_state, parent=self, action=action)
-        self.children.append(child)
-        return child
+        p, v = self.evaluate()
+        for i in range(9):
+            for j in range(9):
+                if((i,j) not in self.untried_actions): 
+                    continue
+                new_state = copy.deepcopy(self.game_state)
+                # if(self.game_state.curr_player == "B"):
+                #     new_state.curr_player = "W"
+                # else:
+                #     new_state.curr_player = "B"
+                new_state.board[i][j] = new_state.curr_player
+                child = MCTSNode(new_state, parent=self, action=(i, j))
+                child.prior_prob = p[i * 9 + j]
+                self.children.append(child)
+        self.value = v
+        return p, v
 
     
-    def rollout(self):
-        state = copy.deepcopy(self.game_state)
-        for i in range(1000): # how many... if its from one state surely like 100 is good enough
-            actions = self.get_actions()
-            if actions:
-                move_x, move_y = random.choice(actions) # idt this is good enough... should i MCTS vs MCTS in rollouts??? tbh i think this needs to be replaced with neural net...
-                state.board[move_x][move_y] = state.curr_player
-                state.curr_player = "B" if state.curr_player == "W" else "W"
-        white_score, black_score = state.score()
-         # want to compare to black?
-        return white_score/(NUM_COLS*NUM_ROWS/2)
-        # return white_score
-        # return (white_score - black_score)
-        # return (white_score - black_score)/(NUM_COLS*NUM_ROWS)
-        
-    def backpropagate(self, score):
+    def evaluate(self): # rename
+        model = NeuralNetwork()
+        board = self.game_state.board
+        int_board = copy.deepcopy(board)
+        for i in range(9):
+            for j in range(9):
+                if board[i][j] == "O":
+                    int_board[i][j] = 0
+                elif board[i][j] == "B":
+                    int_board[i][j] = 1
+                else:
+                    int_board[i][j] = 2
+        state = torch.tensor(int_board, dtype = torch.float32).unsqueeze(0).unsqueeze(0)
+        state = state.repeat(1, 1, 1, 1)
+        p, v = model(state)
+        p = p.detach().numpy()[0]
+        return p, v
+
+    def backpropagate(self, value):
+        self.action_val = ((self.action_val * self.visits) + value)/(self.visits + 1)
         self.visits += 1
-        self.score += score
+
         if self.parent:
-            self.parent.backpropagate(score)
+            self.parent.backpropagate(value)
     
-# if current score > max, resign!
+ # resign condition

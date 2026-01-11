@@ -5,17 +5,21 @@ class Go:
         self.board = [["O"]*num_cols for _ in range(num_rows)]
         self.prev_state = [["O"]*num_cols for _ in range(num_rows)]
         self.curr_player = "B"
+        self.turn_number = 0
 
     def print_board(self):
+        str_board = ""
         for i in range(self.num_rows):
             for j in range(self.num_cols):
-                print(self.board[i][j], end="")
+                str_board += self.board[i][j]
                 if (j != self.num_cols - 1):
-                    print(" - ", end = "")
+                    str_board+=" - "
                 else:
-                    print()
+                    str_board+="\n"
                     if (i != self.num_rows - 1):
-                        print("|   " * self.num_cols)
+                        str_board += "|   " * self.num_cols
+            str_board+= "\n"
+        return str_board
 
     def play_move(self, player, move_x, move_y):
         # while(True):
@@ -28,12 +32,14 @@ class Go:
             self.board[int(move_x)][int(move_y)] = "B"
             self.check_all_captured("W", "B")
             self.print_board()
+            self.curr_player = "W"
         else:
             # move_x = input("White's Move Row: ")
             # move_y = input("White's Move Column: ")
             self.board[int(move_x)][int(move_y)] = "W"
             self.check_all_captured("B", "W")
             self.print_board()
+            self.curr_player = "B"
 
         # if self.prev_board == self.board:
             # break # change later

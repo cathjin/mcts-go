@@ -42,26 +42,27 @@ async def play_move(m: Move):
         "board": game.board,
     }
 
-def mcts_search(root_state, iterations=80):
+def mcts_search(root_state, iterations=50):
     root = MCTSNode(root_state)
 
     for i in range(iterations): # how much to look ahead by?
+        print(i)
         node = root
 
-        while(node.children != [] and node.untried_actions == []):
+        while(node.children != []):
             node = node.best_child()
 
         # Expansion
-        if (node.untried_actions):
-            node = node.expand()
-        
-        # Simulation
-        score = node.rollout() # remove rollout??
+        if (node.children == []):
+            p, v = node.expand()
 
         # Backpropagation
-        node.backpropagate(score)
+        node.backpropagate(int(v))
+    
+    best_child = root.best_child(c=0)
     print(len(root.children))
     for child in root.children:
-        print (child.action, child.score/child.visits)
-    print (root.best_child(c=0).action, root.best_child(c=0).score/root.best_child(c=0).visits)
-    return root.best_child(c=0).action  # Return best move
+        print (child.action_val + 1.4*child.prior_prob/(1 + child.visits))
+    print (root.best_child(c=0).action, child.action_val + 1.4*child.prior_prob/(1 + child.visits))
+
+    return best_child.action  # Return best move
