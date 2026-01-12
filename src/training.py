@@ -39,9 +39,10 @@ class SelfPlayDataset(Dataset):
                     elif(row[i] == "B"): row[i] = 1
                     else: row[i] = 2
                 state.append(row)
-        move_prob = move_prob.strip().strip("[]").split()
+        move_prob = move_prob.strip().strip("[]").split(",")
         for i in range(len(move_prob)):
             move_prob[i] = float(move_prob[i])
+        # move_prob.append(0)
         state = torch.tensor(state, dtype=torch.float32)
         state = state.unsqueeze(0)
         move_prob = torch.tensor(move_prob, dtype=torch.float32)
@@ -67,8 +68,7 @@ def loss_fnc(pred, y):
 
 loss_fn = loss_fnc
 
-    
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=1e-4)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -84,21 +84,27 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         output = model(X)
         # print(z,v)
         loss = loss_fn(output, y)
+        print(loss)
         optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        total_norm = 0
+        for name, p in model.named_parameters():
+            if p.grad is not None:
+                total_norm += p.grad.data.norm(2).item()
 
+        print("grad norm:", total_norm)
+        optimizer.step()
         if batch % 4 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 torch.autograd.set_detect_anomaly(True)
 def train():
-    for game_num in range(80):
+    for game_num in range(5):
         self_play(game_num)
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
-            game_dir= f"games/game{game_num}"
+            game_dir= f"games/game0"#{game_num}"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):

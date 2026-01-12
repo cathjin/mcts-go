@@ -39,7 +39,7 @@ class MCTSNode:
     
     def best_child(self, c=1.4):
         return max(self.children, key=lambda child:
-                child.action_val + c*child.prior_prob*math.sqrt()/(1 + child.visits))
+                child.action_val + c*child.prior_prob*math.sqrt(self.visits)/(1 + child.visits))
 
     def expand(self):
         p, v = self.evaluate()
@@ -77,7 +77,7 @@ class MCTSNode:
                     int_board[i][j] = 1
                 else:
                     int_board[i][j] = 2
-        state = torch.tensor(int_board, dtype = torch.float32).unsqueeze(0).unsqueeze(0)
+        state = torch.tensor([int_board], dtype = torch.float32).unsqueeze(0)
         state = state.to(device)
         with torch.no_grad():
             p, v = model(state)
