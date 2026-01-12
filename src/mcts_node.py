@@ -2,6 +2,7 @@ import random
 import copy
 import torch
 import numpy as np 
+import math
 
 from go import Go
 from neural_network import NeuralNetwork
@@ -19,7 +20,6 @@ class MCTSNode:
         self.children = []
 
         self.turn_number = game_state.turn_number + 1
-
 
         self.visits = 0
         self.action_val = 0
@@ -39,7 +39,7 @@ class MCTSNode:
     
     def best_child(self, c=1.4):
         return max(self.children, key=lambda child:
-                child.action_val + c*child.prior_prob/(1 + child.visits))
+                child.action_val + c*child.prior_prob*math.sqrt()/(1 + child.visits))
 
     def expand(self):
         p, v = self.evaluate()
@@ -62,8 +62,11 @@ class MCTSNode:
 
     
     def evaluate(self): # rename
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
         model = NeuralNetwork()
         model.load_state_dict(torch.load("model_params.pth", weights_only=True))
+        model.eval()
+        model = model.to(device)
         board = self.game_state.board
         int_board = copy.deepcopy(board)
         for i in range(9):
@@ -75,9 +78,10 @@ class MCTSNode:
                 else:
                     int_board[i][j] = 2
         state = torch.tensor(int_board, dtype = torch.float32).unsqueeze(0).unsqueeze(0)
-        state = state.repeat(1, 1, 1, 1)
-        p, v = model(state)
-        p = p.detach().numpy()[0]
+        state = state.to(device)
+        with torch.no_grad():
+            p, v = model(state)
+        p = p.detach().cpu().numpy()[0]
         return p, v
 
     def backpropagate(self, value):

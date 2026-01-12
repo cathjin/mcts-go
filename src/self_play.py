@@ -3,7 +3,7 @@ import os
 from go import Go
 from mcts_node import MCTSNode
 
-def mcts_search(root_state, game_num, iterations=100):
+def mcts_search(root_state, game_num, iterations=50):
     root = MCTSNode(root_state)
 
     for i in range(iterations): # how much to look ahead by?
@@ -22,7 +22,7 @@ def mcts_search(root_state, game_num, iterations=100):
     best_child = root.best_child(c=0)
     with open(f"games/game{game_num}/turn{best_child.turn_number}.txt", "a") as f:
         f.write(best_child.game_state.print_board())
-        f.write(str(p))
+        f.write(str(p)) #bad
         f.write("\n")
 
     # print(len(root.children))

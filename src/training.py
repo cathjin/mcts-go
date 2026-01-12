@@ -18,13 +18,13 @@ class SelfPlayDataset(Dataset):
         return len(self.turn_files)
     
     def __getitem__(self, index):
-        game_path = os.path.join(self.game_dir, self.turn_files[index])
+        game_path = self.game_dir + "/" + self.turn_files[index]
         state_string = ""
         move_prob = ""
         with open(game_path, 'r') as file:
             for i in range(17):
                 state_string+=(next(file))
-            for i in range(14):
+            while("]" not in move_prob):
                 move_prob += next(file)
             
             win = float(next(file))
@@ -49,61 +49,58 @@ class SelfPlayDataset(Dataset):
         expected = (move_prob, win)
         return state, expected
 
-# device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
-device = "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")# device = "cpu"
 print(f"Using {device} device")
-model = NeuralNetwork()#.to(device)
+model = NeuralNetwork().to(device)
 model.load_state_dict(torch.load("model_params.pth", weights_only=True))
 print(model)
 
-learning_rate = 1e-2
+learning_rate = 1e-3
 batch_size = 32
 epochs = 5
 
-def loss_fnc(pred, y, params):
+def loss_fnc(pred, y):
     output_p, output_v = pred
     target_p, target_v = y
-    loss = F.mse_loss(output_v, target_v) #- F.cross_entropy(output_p, target_p) + 1.4 * (sum(p.pow(2).sum() for p in params) ** 2)
-    print("LOSS", loss)
+    loss = F.mse_loss(output_v.squeeze(-1), target_v)  -torch.mean(torch.sum(target_p * F.log_softmax(output_p, dim=1), dim=1))
     return loss
 
-loss_fn = nn.MSELoss()
+loss_fn = loss_fnc
 
     
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
 
     for batch, (X,y) in enumerate(dataloader):
-        p, z = model(X)
-        pi, v = y
-        print(z,v)
-        loss = loss_fn(z, v)
-        print("LOSS", loss)
-        loss.backward()
-        for name, param in model.named_parameters():
-            if param.grad is not None:
-                print(name, param.grad.abs().mean())
-            else:
-                print(name, "has no gradient")
-        optimizer.step()
+        X = X.to(device)
+        print("Input device:", X.device)
+        target_p, target_v = y
+        target_p = target_p.to(device)
+        target_v = target_v.to(device)
+        y = (target_p, target_v)
+        output = model(X)
+        # print(z,v)
+        loss = loss_fn(output, y)
         optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-        if batch % 5 == 0:
+        if batch % 4 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 torch.autograd.set_detect_anomaly(True)
 def train():
-    for game_num in range(30):
+    for game_num in range(80):
         self_play(game_num)
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 129)],
+            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
             game_dir= f"games/game{game_num}"
         )
-        train_dataloader = DataLoader(training_data, batch_size=5, shuffle=True)
+        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)

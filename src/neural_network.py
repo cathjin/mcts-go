@@ -24,8 +24,8 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         out = self.conv(x)
-        out = self.res_blocks(out)
-        out = self.relu(out)
+        out = self.batch_norm(out)
+        out = self.relu(out)    
         out = self.res_blocks(out)
         p = self.p_conv(out)
         p = self.p_batch_norm(p)
