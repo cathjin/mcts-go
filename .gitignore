@@ -3,3 +3,4 @@ __pycache__
 notes
 mcts_go.egg-info
 games
+*.pth

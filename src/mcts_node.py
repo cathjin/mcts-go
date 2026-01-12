@@ -31,7 +31,9 @@ class MCTSNode:
         actions = []
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
-                if(self.game_state.board[i][j] == "O"):
+                player = self.game_state.curr_player
+                op = "B" if player == "W" else "W"
+                if(self.game_state.board[i][j] == "O" and self.game_state.check_captured(player, op, i, j, []) is False):
                     actions.append((i,j))
         return actions
     
@@ -50,7 +52,8 @@ class MCTSNode:
                 #     new_state.curr_player = "W"
                 # else:
                 #     new_state.curr_player = "B"
-                new_state.board[i][j] = new_state.curr_player
+                new_state.play_move(new_state.curr_player, i,j)
+                # new_state.board[i][j] = new_state.curr_player
                 child = MCTSNode(new_state, parent=self, action=(i, j))
                 child.prior_prob = p[i * 9 + j]
                 self.children.append(child)
@@ -60,6 +63,7 @@ class MCTSNode:
     
     def evaluate(self): # rename
         model = NeuralNetwork()
+        model.load_state_dict(torch.load("model_params.pth", weights_only=True))
         board = self.game_state.board
         int_board = copy.deepcopy(board)
         for i in range(9):

@@ -18,7 +18,8 @@ class Go:
                     str_board+="\n"
                     if (i != self.num_rows - 1):
                         str_board += "|   " * self.num_cols
-            str_board+= "\n"
+            if i != self.num_rows - 1:
+                str_board+= "\n"
         return str_board
 
     def play_move(self, player, move_x, move_y):
@@ -57,7 +58,6 @@ class Go:
             if self.check_captured(player, opp, x,y, checked):
                 captured.append((x,y))
             
-        print("Captured", captured)
         for x,y in captured:
             self.board[x][y] = "O"
         return captured

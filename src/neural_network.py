@@ -8,7 +8,7 @@ class NeuralNetwork(nn.Module):
 
         self.conv = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.batch_norm = nn.BatchNorm2d(num_features=64)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=False)
 
         self.res_blocks = nn.Sequential(
             *[ResBlock() for _ in range(20)]
@@ -36,10 +36,8 @@ class NeuralNetwork(nn.Module):
 
         v = self.v_conv(out)
         v = self.v_bn(v)
-        v = self.relu(v)
         v = v.view(v.size(0), -1)
         v = self.v_out(v)
-        v = self.relu(v)
         v = torch.tanh(v)
 
         return p, v
@@ -49,13 +47,13 @@ class ResBlock(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.batch_norm = nn.BatchNorm2d(num_features=64)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=False)
     
     def forward(self, x):
         out = self.conv(x)
         out = self.batch_norm(out)
         out = self.relu(out)
 
-        out += x
+        out = out + x
         out = self.relu(out)
         return out
