@@ -10,6 +10,7 @@ random.seed(42)
 
 # Create ONE game that persists between requests
 game = Go(9,9)
+root = MCTSNode(game)
 app = FastAPI()
 
 app.add_middleware(
@@ -32,21 +33,24 @@ async def root():
 
 @app.post("/move")
 async def play_move(m: Move):
+    global game
     if (m.turn == "B"):
         print(m.turn, m.col, m.row)
         game.play_move(m.turn, m.row, m.col)
     else:
-        move_x, move_y = mcts_search(game)
-        game.play_move(m.turn, move_x, move_y)
+        best_child = mcts_search(game)
+        root = best_child
+        root.parent = None
+        game = root.game_state
+        # game.play_move(m.turn, move_x, move_y)
     return {
         "board": game.board,
     }
 
-def mcts_search(root_state, iterations=50):
+def mcts_search(root_state, iterations=200):
     root = MCTSNode(root_state)
 
     for i in range(iterations): # how much to look ahead by?
-        print(i)
         node = root
 
         while(node.children != []):
@@ -59,10 +63,9 @@ def mcts_search(root_state, iterations=50):
         # Backpropagation
         node.backpropagate(int(v))
     
-    best_child = root.best_child(c=0)
-    print(len(root.children))
-    for child in root.children:
-        print (child.action_val + 1.4*child.prior_prob/(1 + child.visits))
-    print (root.best_child(c=0).action, child.action_val + 1.4*child.prior_prob/(1 + child.visits))
+    best_child = root.best_child()
+    # for child in root.children:
+    #     print (child.action_val + 1.4*child.prior_prob/(1 + child.visits))
+    # print (root.best_child().action, child.action_val + 1.4*child.prior_prob/(1 + child.visits))
 
-    return best_child.action  # Return best move
+    return best_child  # Return best move

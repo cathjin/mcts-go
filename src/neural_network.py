@@ -9,7 +9,7 @@ class NeuralNetwork(nn.Module):
         self.conv_block = ConvBlock()
 
         self.res_blocks = nn.Sequential(
-            *[ResBlock() for _ in range(20)]
+            *[ResBlock() for _ in range(9)]
         )
         self.policy = PolicyHead()
         self.value = ValueHead()
