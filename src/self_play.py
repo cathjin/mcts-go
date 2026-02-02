@@ -5,7 +5,7 @@ from mcts_node import MCTSNode
 import time
 
 
-def mcts_search(root, game_num, turn, iterations=400):
+def mcts_search(root, game_num, turn, model, iterations=400):
     for i in range(iterations):  # how much to look ahead by?
         node = root
 
@@ -15,7 +15,7 @@ def mcts_search(root, game_num, turn, iterations=400):
         # Expansion
         # start_time = time.perf_counter()
         if node.children == []:
-            p, v = node.expand()
+            p, v = node.expand(model)
 
         # end_time = time.perf_counter()
         # elapsed_time = end_time - start_time
@@ -53,7 +53,7 @@ def mcts_search(root, game_num, turn, iterations=400):
     
 
 
-def self_play(game_num):
+def self_play(game_num, model):
     print("running")
     os.makedirs(f"games/game{game_num}")
     game = Go(9)
@@ -61,7 +61,7 @@ def self_play(game_num):
     num_moves = 0
     for i in range(128):
         num_moves = i
-        best_child = mcts_search(root, game_num, i)
+        best_child = mcts_search(root, game_num, i, model)
         if(best_child):
             root = best_child
             root.parent = None

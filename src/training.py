@@ -103,17 +103,21 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
 torch.autograd.set_detect_anomaly(True)
 def train():
-    for game_num in range(30, 31):
-        num_moves = self_play(game_num)
+    for game_num in range(36, 75):
+        model = NeuralNetwork()
+        model.load_state_dict(torch.load("model_params.pth", weights_only=True))
+        model.eval()
+        model = model.to(device)
+        num_moves = self_play(game_num, model)
         os.makedirs(f"games/game{game_num}r")
         os.makedirs(f"games/game{game_num}rr")
         os.makedirs(f"games/game{game_num}rrr")
         os.makedirs(f"games/game{game_num}hf")
         os.makedirs(f"games/game{game_num}vf")
         augment_data(game_num, num_moves)
-
+        turn_files = [f"turn{i}.txt" for i in range(1, num_moves)]
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -122,7 +126,7 @@ def train():
             train_loop(train_dataloader, model, loss_fn, optimizer)        
 
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}r"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -131,7 +135,7 @@ def train():
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}rr"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -140,7 +144,7 @@ def train():
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}rrr"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -149,7 +153,7 @@ def train():
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}hf"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -158,7 +162,7 @@ def train():
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
-            turn_files= [f"turn{i}.txt" for i in range(1, 51)],
+            turn_files= turn_files,
             game_dir= f"games/game{game_num}vf"
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)

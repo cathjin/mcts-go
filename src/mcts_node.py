@@ -11,10 +11,6 @@ NUM_COLS = 9
 NUM_ROWS = 9
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
-model = NeuralNetwork()
-model.load_state_dict(torch.load("model_params.pth", weights_only=True))
-model.eval()
-model = model.to(device)
 
 class MCTSNode:
     def __init__(self, game_state : Go, action = None, parent = None):
@@ -47,9 +43,9 @@ class MCTSNode:
         return max(self.children, key=lambda child:
                 child.action_val + c*child.prior_prob*math.sqrt(self.visits)/(1 + child.visits))
 
-    def expand(self):
+    def expand(self, model):
         # start_time = time.perf_counter()
-        p, v = self.evaluate()
+        p, v = self.evaluate(model)
         # end_time = time.perf_counter()
         # elapsed_time = end_time - start_time
 
@@ -70,7 +66,7 @@ class MCTSNode:
         return p, v
 
     
-    def evaluate(self): # rename
+    def evaluate(self, model): # rename
         board = self.game_state.board
         int_board = copy.deepcopy(board)
         for i in range(9):
