@@ -1,11 +1,7 @@
-import random
 import copy
 import torch
-import numpy as np 
 import math
-import time
 from go import Go
-from neural_network import NeuralNetwork
 
 NUM_COLS = 9
 NUM_ROWS = 9
@@ -39,7 +35,7 @@ class MCTSNode:
                     actions.append((i,j))
         return actions
     
-    def best_child(self, c=1.4):
+    def best_child(self, c : float =1.4):
         return max(self.children, key=lambda child:
                 child.action_val + c*child.prior_prob*math.sqrt(self.visits)/(1 + child.visits))
 

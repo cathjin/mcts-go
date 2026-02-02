@@ -1,24 +1,21 @@
 import os
 import torch
-import numpy as np
-from numpy.linalg import norm
 from torch.utils.data import Dataset, DataLoader
-from torch import nn
 import torch.nn.functional as F
 from augment_data import augment_data
-
+from collections.abc import Callable
 from neural_network import NeuralNetwork
 from self_play import self_play
 
 class SelfPlayDataset(Dataset):
-    def __init__(self, turn_files, game_dir):
+    def __init__(self, turn_files : list[str], game_dir : str):
         self.turn_files = turn_files
         self.game_dir = game_dir
     
     def __len__(self):
         return len(self.turn_files)
     
-    def __getitem__(self, index):
+    def __getitem__(self, index : int) -> tuple[torch.Tensor, (torch.Tensor, torch.Tensor)]:
         game_path = self.game_dir + "/" + self.turn_files[index]
         state_string = ""
         move_prob = ""
@@ -33,8 +30,8 @@ class SelfPlayDataset(Dataset):
         lines = state_string.strip().split("\n")
         state = []
         for line in lines:
-            if "|" not in line:  # This is a data line
-                row = line.split(" - ")  # Split by " - " to get individual elements
+            if "|" not in line: 
+                row = line.split(" - ")  
                 for i in range(len(row)):
                     if(row[i] == "O"): row[i] = 0
                     elif(row[i] == "B"): row[i] = 1
@@ -43,7 +40,6 @@ class SelfPlayDataset(Dataset):
         move_prob = move_prob.strip().strip("[]").split(",")
         for i in range(len(move_prob)):
             move_prob[i] = float(move_prob[i])
-        # move_prob.append(0)
         state = torch.tensor(state, dtype=torch.float32)
         state = state.unsqueeze(0)
         move_prob = torch.tensor(move_prob, dtype=torch.float32)
@@ -51,7 +47,7 @@ class SelfPlayDataset(Dataset):
         expected = (move_prob, win)
         return state, expected
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")# device = "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device} device")
 model = NeuralNetwork().to(device)
 model.load_state_dict(torch.load("model_params.pth", weights_only=True))
@@ -61,7 +57,7 @@ learning_rate = 1e-3
 batch_size = 32
 epochs = 5
 
-def loss_fnc(pred, y):
+def loss_fnc(pred : tuple[int, int], y : tuple[int, int]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     output_p, output_v = pred
     target_p, target_v = y
     value_loss = F.mse_loss(output_v.squeeze(-1), target_v)
@@ -73,7 +69,9 @@ loss_fn = loss_fnc
 
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=1e-4)
 
-def train_loop(dataloader, model, loss_fn, optimizer):
+def train_loop(dataloader : DataLoader, model : NeuralNetwork, 
+               loss_fn : Callable[[tuple[int, int], tuple[int, int]], tuple[torch.Tensor, torch.Tensor, torch.Tensor]], 
+               optimizer : torch.optim) -> None:
     size = len(dataloader.dataset)
     model.train()
 
@@ -102,8 +100,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
             print(f"policy loss: {p_loss:>7f}")
 
 torch.autograd.set_detect_anomaly(True)
-def train():
-    for game_num in range(36, 75):
+def train() -> None:
+    for game_num in range(1, 50):
         model = NeuralNetwork()
         model.load_state_dict(torch.load("model_params.pth", weights_only=True))
         model.eval()

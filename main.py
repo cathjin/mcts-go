@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from src.go import Go
 from src.mcts_node import MCTSNode
-import uvicorn
 import random
 
 random.seed(42)

@@ -1,11 +1,11 @@
 class Go:
-    def __init__(self, dim = 19):
+    def __init__(self, dim : int = 19):
         self.dim = dim
         self.board = [["O"]*dim for _ in range(dim)]
         self.curr_player = "B"
         self.turn_number = 0
 
-    def print_board(self):
+    def print_board(self) -> str:
         str_board = ""
         for i in range(self.dim):
             for j in range(self.dim):
@@ -20,49 +20,30 @@ class Go:
                 str_board+= "\n"
         return str_board
 
-    def play_move(self, player, move_x, move_y):
-        # while(True):
-            # self.prev_board = self.board # need to make deep copy
+    def play_move(self, player : str, move_x : int, move_y : int) -> None:
         if(player == "B"):
-            # move_x = input("Black's Move Row: ")
-            # move_y = input("Black's Move Column: ")
-            # self.board[9 - int(move_x)][ord(move_y) - ord('A')] = "B"
             self.board[int(move_x)][int(move_y)] = "B"
             self.check_all_captured("W", "B")
-            # self.print_board()
             self.curr_player = "W"
         else:
-            # move_x = input("White's Move Row: ")
-            # move_y = input("White's Move Column: ")
             self.board[int(move_x)][int(move_y)] = "W"
             self.check_all_captured("B", "W")
-            # self.print_board()
             self.curr_player = "B"
 
-        # if self.prev_board == self.board:
-            # break # change later
-
-
-    def check_all_captured(self, player, opp):
+    def check_all_captured(self, player : str, opp : str) -> None:
         indices = []
         for i, row in enumerate(self.board):
             for j, element in enumerate(row):
                 if element == player:
                     indices.append((i, j))  # row, col
-        captured = []
         checked = []
         for x,y in indices:
             if((x,y) in checked): 
                 continue
             if self.check_captured(player, opp, x,y, checked):
-                # captured.append((x,y))
                 self.board[x][y] = "O"
-            
-        # for x,y in captured:
-        #     self.board[x][y] = "O"
-        return captured
 
-    def check_captured(self, player, opp, x, y, checked):
+    def check_captured(self, player : str, opp : str, x : int, y : int, checked : list[(int, int)]) -> bool:
         neighbour_indices = self.get_neighbours_indices(x,y)
         neighbour_symbols = self.get_neighbours_symbol(neighbour_indices)
         checked.append((x,y))

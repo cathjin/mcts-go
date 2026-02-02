@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -14,7 +13,7 @@ class NeuralNetwork(nn.Module):
         self.policy = PolicyHead()
         self.value = ValueHead()
 
-    def forward(self, x):
+    def forward(self, x : torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         out = self.conv_block(x)
         out = self.res_blocks(out)
         p = self.policy(out)
@@ -28,7 +27,7 @@ class ConvBlock(nn.Module):
         self.batch_norm = nn.BatchNorm2d(num_features=64)
         self.relu = nn.ReLU(inplace = False)
     
-    def forward(self, x):
+    def forward(self, x : torch.Tensor) -> torch.Tensor:
         out = self.conv(x)
         out = self.batch_norm(out)
         out = self.relu(out)
@@ -44,7 +43,7 @@ class ResBlock(nn.Module):
         self.relu = nn.ReLU(inplace=False)
 
     
-    def forward(self, x):
+    def forward(self, x : torch.Tensor) -> torch.Tensor:
         out = self.conv1(x)
         out = self.batch_norm1(out)
         out = self.relu(out)
@@ -63,7 +62,7 @@ class PolicyHead(nn.Module):
         self.relu = nn.ReLU(inplace=False)
         self.linear = nn.Linear(in_features=162, out_features=81)
     
-    def forward(self, x):
+    def forward(self, x : torch.Tensor) -> torch.Tensor:
         p = self.conv(x)
         p = self.batch_norm(p)
         p = self.relu(p)
@@ -80,7 +79,7 @@ class ValueHead(nn.Module):
         self.linear2 = nn.Linear(in_features=64, out_features=1)
         self.relu = nn.ReLU(inplace=False)
     
-    def forward(self, x):
+    def forward(self, x : torch.Tensor) -> torch.Tensor:
         v = self.conv(x)
         v = self.batch_norm(v)
         v = self.relu(v)

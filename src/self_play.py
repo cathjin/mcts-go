@@ -1,28 +1,26 @@
 import os
-import math
 from go import Go
 from mcts_node import MCTSNode
-import time
+import torch
+from typing import Union
 
-
-def mcts_search(root, game_num, turn, model, iterations=400):
-    for i in range(iterations):  # how much to look ahead by?
+def mcts_search(root : MCTSNode, game_num : int, 
+                turn : int, model : torch.nn.Module, 
+                iterations : int = 400) -> Union[MCTSNode, bool]:
+    for i in range(iterations):
         node = root
-
+        
+        # find best leaf node to expand
         while node.children != []:
             node = node.best_child()
 
-        # Expansion
-        # start_time = time.perf_counter()
+        # expand leaf node
         if node.children == []:
             p, v = node.expand(model)
 
-        # end_time = time.perf_counter()
-        # elapsed_time = end_time - start_time
-
-        # print(f"Elapsed time: {elapsed_time:.4f} seconds")
-        # Backpropagation
+        # propagate results back up the tree
         node.backpropagate(int(v))
+
     if(root.children):
         best_child = root.best_child()
         if turn <= 30:
@@ -41,19 +39,7 @@ def mcts_search(root, game_num, turn, model, iterations=400):
     else:
         return False
 
-
-    # print(len(root.children))
-    # for child in root.children:
-    #     print("-------")
-    #     print(child.action)
-    #     print(child.prior_prob)
-    #     print (child.action_val + 1.4*child.prior_prob*math.sqrt(root.visits)/(1 + child.visits))
-    # print (best_child.action, best_child.action_val + 1.4*best_child.prior_prob*math.sqrt(root.visits)/(1 + best_child.visits))
-
-    
-
-
-def self_play(game_num, model):
+def self_play(game_num : int, model : torch.nn.Module) -> int:
     print("running")
     os.makedirs(f"games/game{game_num}")
     game = Go(9)
@@ -65,14 +51,12 @@ def self_play(game_num, model):
         if(best_child):
             root = best_child
             root.parent = None
-            # move_x, move_y = best_child.action
-            # game.play_move(game.curr_player, move_x, move_y)
             game = root.game_state
             game.turn_number += 1
         else:
             break
     white, black = game.score()
-    winner = 0  # 1 for black, -1 for white
+    winner = 0  # 1 for black, -1 for white if black wins
     if white < black:
         winner = 1
     elif white > black:

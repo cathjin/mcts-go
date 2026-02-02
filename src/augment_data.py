@@ -1,6 +1,6 @@
 import numpy as np
 
-def augment_data(game, num_moves):
+def augment_data(game : int, num_moves : int) -> None:
     for turn in range(1, num_moves):
         board_string = ""
         move_prob = ""
@@ -54,7 +54,9 @@ def augment_data(game, num_moves):
             augment_write(game, turn, "vf", vf_board, vf_move_prob, win)
 
 
-def augment_write(game, turn, aug_type, board, move_prob, win):
+def augment_write(game : int, turn : int, aug_type : str, 
+                  board : list[list[int]], move_prob : list[float], 
+                  win : float) -> None:
     with open(f"games/game{game}{aug_type}/turn{turn}.txt","w") as file:
         str_board = ""
         for i in range(9):
