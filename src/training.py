@@ -103,14 +103,14 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
 torch.autograd.set_detect_anomaly(True)
 def train():
-    for game_num in range(24,25):
-        self_play(game_num)
+    for game_num in range(30, 31):
+        num_moves = self_play(game_num)
         os.makedirs(f"games/game{game_num}r")
         os.makedirs(f"games/game{game_num}rr")
         os.makedirs(f"games/game{game_num}rrr")
         os.makedirs(f"games/game{game_num}hf")
         os.makedirs(f"games/game{game_num}vf")
-        augment_data(game_num)
+        augment_data(game_num, num_moves)
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],

@@ -1,7 +1,7 @@
 import numpy as np
 
-def augment_data(game):
-    for turn in range(1, 129):
+def augment_data(game, num_moves):
+    for turn in range(1, num_moves):
         board_string = ""
         move_prob = ""
 
