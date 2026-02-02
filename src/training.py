@@ -103,7 +103,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
 
 torch.autograd.set_detect_anomaly(True)
 def train():
-    for game_num in range(20,21):
+    for game_num in range(24,25):
         self_play(game_num)
         os.makedirs(f"games/game{game_num}r")
         os.makedirs(f"games/game{game_num}rr")
@@ -120,7 +120,6 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)        
-        torch.save(model.state_dict(), f"model_params{game_num}.pth")
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
@@ -130,7 +129,6 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
-        torch.save(model.state_dict(), f"model_params{game_num}r.pth")
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
@@ -140,7 +138,6 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
-        torch.save(model.state_dict(), f"model_params{game_num}rr.pth")
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
@@ -150,7 +147,6 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
-        torch.save(model.state_dict(), f"model_params{game_num}rrr.pth")
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
@@ -160,7 +156,6 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
-        torch.save(model.state_dict(), f"model_params{game_num}hf.pth")
 
         training_data = SelfPlayDataset(
             turn_files= [f"turn{i}.txt" for i in range(1, 51)],
@@ -170,6 +165,5 @@ def train():
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
-        torch.save(model.state_dict(), f"model_params{game_num}vf.pth")
         torch.save(model.state_dict(), "model_params.pth")
 train()

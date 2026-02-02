@@ -1,8 +1,11 @@
 import pytest
 from go import Go
+import time
+
 
 def test_captured():
-    go = Go(9,9)
+    start_time = time.perf_counter()
+    go = Go(9)
     # should probably hide the board but oh well
     input_board = """
 B - B - O - B - B - B - O - B - B
@@ -58,14 +61,20 @@ B - O - W - B - B - W - O - W - O"""
         if "|" not in line:  # This is a data line
             row = line.split(" - ")  # Split by " - " to get individual elements
             expected.append(row)
-    expected_go = Go(9,9)
+    expected_go = Go(9)
     expected_go.board = expected
     expected_go.check_all_captured("B", "W")
     expected_go.print_board()
+
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+
+    print(f"Elapsed time: {elapsed_time:.4f} seconds")
     assert go.board == expected
 
+
 def test_captured2():
-    go = Go(9,9)
+    go = Go(9)
     input_board = """
 B - B - O - B - B - B - O - B - B
 |   |   |   |   |   |   |   |   |
@@ -100,7 +109,7 @@ B - O - W - B - O - W - O - W - O
 
 
 def test_captured3():
-    go = Go(9,9)
+    go = Go(9)
     # should probably hide the board but oh well
     input_board = """
 O - O - W - O - O - O - O - O - O
@@ -156,7 +165,7 @@ O - O - O - W - O - O - O - O - O"""
         if "|" not in line:  # This is a data line
             row = line.split(" - ")  # Split by " - " to get individual elements
             expected.append(row)
-    expected_go = Go(9,9)
+    expected_go = Go(9)
     expected_go.board = expected
     expected_go.check_all_captured("B", "W")
     expected_go.print_board()

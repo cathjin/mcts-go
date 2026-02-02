@@ -9,7 +9,7 @@ import random
 random.seed(42)
 
 # Create ONE game that persists between requests
-game = Go(9,9)
+game = Go(9)
 root = MCTSNode(game)
 app = FastAPI()
 

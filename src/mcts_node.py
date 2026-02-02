@@ -3,12 +3,18 @@ import copy
 import torch
 import numpy as np 
 import math
-
+import time
 from go import Go
 from neural_network import NeuralNetwork
 
 NUM_COLS = 9
 NUM_ROWS = 9
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
+model = NeuralNetwork()
+model.load_state_dict(torch.load("model_params.pth", weights_only=True))
+model.eval()
+model = model.to(device)
 
 class MCTSNode:
     def __init__(self, game_state : Go, action = None, parent = None):
@@ -42,31 +48,29 @@ class MCTSNode:
                 child.action_val + c*child.prior_prob*math.sqrt(self.visits)/(1 + child.visits))
 
     def expand(self):
+        # start_time = time.perf_counter()
         p, v = self.evaluate()
-        for i in range(9):
-            for j in range(9):
-                if((i,j) not in self.untried_actions): 
-                    continue
-                new_state = copy.deepcopy(self.game_state)
-                # if(self.game_state.curr_player == "B"):
-                #     new_state.curr_player = "W"
-                # else:
-                #     new_state.curr_player = "B"
-                new_state.play_move(new_state.curr_player, i,j)
-                # new_state.board[i][j] = new_state.curr_player
-                child = MCTSNode(new_state, parent=self, action=(i, j))
-                child.prior_prob = p[i * 9 + j]
-                self.children.append(child)
+        # end_time = time.perf_counter()
+        # elapsed_time = end_time - start_time
+
+        # print(f"E time: {elapsed_time:.4f} seconds")
+        
+        for i,j in self.untried_actions:
+            new_state = copy.deepcopy(self.game_state)
+            # if(self.game_state.curr_player == "B"):
+            #     new_state.curr_player = "W"
+            # else:
+            #     new_state.curr_player = "B"
+            new_state.play_move(new_state.curr_player, i,j)
+            # new_state.board[i][j] = new_state.curr_player
+            child = MCTSNode(new_state, parent=self, action=(i, j))
+            child.prior_prob = p[i * 9 + j]
+            self.children.append(child)
         self.value = v
         return p, v
 
     
     def evaluate(self): # rename
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
-        model = NeuralNetwork()
-        model.load_state_dict(torch.load("model_params.pth", weights_only=True))
-        model.eval()
-        model = model.to(device)
         board = self.game_state.board
         int_board = copy.deepcopy(board)
         for i in range(9):
@@ -91,4 +95,3 @@ class MCTSNode:
         if self.parent:
             self.parent.backpropagate(value)
     
- # resign condition
