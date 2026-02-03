@@ -13,10 +13,22 @@ class SelfPlayDataset(Dataset):
         self.game_dir = game_dir
     
     def __len__(self):
-        return len(self.turn_files)
+        return len(self.turn_files) * 6
     
     def __getitem__(self, index : int) -> tuple[torch.Tensor, (torch.Tensor, torch.Tensor)]:
-        game_path = self.game_dir + "/" + self.turn_files[index]
+        game_dir = self.game_dir
+        num_turns = len(self.turn_files)
+        if(int(index / num_turns) == 1):
+            game_dir += "hf"
+        elif(int(index / num_turns) == 2):
+            game_dir += "r"
+        elif(int(index / num_turns) == 3):
+            game_dir += "rr"
+        elif(int(index / num_turns) == 4):
+            game_dir += "rrr"
+        else:
+            game_dir += "vf"
+        game_path = self.game_dir + "/" + self.turn_files[index % (num_turns)]
         state_string = ""
         move_prob = ""
         with open(game_path, 'r') as file:
@@ -53,9 +65,9 @@ model = NeuralNetwork().to(device)
 model.load_state_dict(torch.load("model_params.pth", weights_only=True))
 print(model)
 
-learning_rate = 1e-5
-batch_size = 50
-epochs = 3
+learning_rate = 0.01
+batch_size = 32
+epochs = 5
 
 def loss_fnc(pred : tuple[int, int], y : tuple[int, int]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     output_p, output_v = pred
@@ -67,7 +79,7 @@ def loss_fnc(pred : tuple[int, int], y : tuple[int, int]) -> tuple[torch.Tensor,
 
 loss_fn = loss_fnc
 
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum = 0.9, weight_decay=10e-4)
 
 def train_loop(dataloader : DataLoader, model : NeuralNetwork, 
                loss_fn : Callable[[tuple[int, int], tuple[int, int]], tuple[torch.Tensor, torch.Tensor, torch.Tensor]], 
@@ -77,7 +89,6 @@ def train_loop(dataloader : DataLoader, model : NeuralNetwork,
 
     for batch, (X,y) in enumerate(dataloader):
         X = X.to(device)
-        print("Input device:", X.device)
         target_p, target_v = y
         target_p = target_p.to(device)
         target_v = target_v.to(device)
@@ -93,6 +104,7 @@ def train_loop(dataloader : DataLoader, model : NeuralNetwork,
         total_norm = total_norm ** 0.5
         optimizer.step()
         if batch % 4 == 0:
+            print("--------------------------")
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
             print(f"value loss: {v_loss:>7f}")
@@ -101,19 +113,20 @@ def train_loop(dataloader : DataLoader, model : NeuralNetwork,
 
 torch.autograd.set_detect_anomaly(True)
 def train() -> None:
-    for game_num in range(50, 75):
+    for game_num in range(109, 110):
         print(f"Game {game_num} --------------------------------------")
         model = NeuralNetwork()
         model.load_state_dict(torch.load("model_params.pth", weights_only=True))
         model.eval()
         model = model.to(device)
-        num_moves = self_play(game_num, model)
-        os.makedirs(f"games/game{game_num}r")
-        os.makedirs(f"games/game{game_num}rr")
-        os.makedirs(f"games/game{game_num}rrr")
-        os.makedirs(f"games/game{game_num}hf")
-        os.makedirs(f"games/game{game_num}vf")
-        augment_data(game_num, num_moves)
+        num_moves = 59 + 1
+        # # num_moves = self_play(game_num, model)
+        # # os.makedirs(f"games/game{game_num}r")
+        # # os.makedirs(f"games/game{game_num}rr")
+        # # os.makedirs(f"games/game{game_num}rrr")
+        # # os.makedirs(f"games/game{game_num}hf")
+        # # os.makedirs(f"games/game{game_num}vf")
+        # augment_data(game_num, num_moves)
         turn_files = [f"turn{i}.txt" for i in range(1, num_moves)]
         training_data = SelfPlayDataset(
             turn_files= turn_files,
@@ -121,52 +134,8 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
+            print(f"Epoch {t+1}---------------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)        
 
-        training_data = SelfPlayDataset(
-            turn_files= turn_files,
-            game_dir= f"games/game{game_num}r"
-        )
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
-            train_loop(train_dataloader, model, loss_fn, optimizer)
-
-        training_data = SelfPlayDataset(
-            turn_files= turn_files,
-            game_dir= f"games/game{game_num}rr"
-        )
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
-            train_loop(train_dataloader, model, loss_fn, optimizer)
-
-        training_data = SelfPlayDataset(
-            turn_files= turn_files,
-            game_dir= f"games/game{game_num}rrr"
-        )
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
-            train_loop(train_dataloader, model, loss_fn, optimizer)
-
-        training_data = SelfPlayDataset(
-            turn_files= turn_files,
-            game_dir= f"games/game{game_num}hf"
-        )
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
-            train_loop(train_dataloader, model, loss_fn, optimizer)
-
-        training_data = SelfPlayDataset(
-            turn_files= turn_files,
-            game_dir= f"games/game{game_num}vf"
-        )
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}-------------------------------")
-            train_loop(train_dataloader, model, loss_fn, optimizer)
         torch.save(model.state_dict(), "model_params.pth")
 train()

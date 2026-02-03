@@ -7,6 +7,8 @@ class Go:
 
     def print_board(self) -> str:
         str_board = ""
+
+        # format board
         for i in range(self.dim):
             for j in range(self.dim):
                 str_board += self.board[i][j]

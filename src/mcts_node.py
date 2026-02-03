@@ -24,7 +24,6 @@ class MCTSNode:
         self.prior_prob = 0
         self.value = 0
 
-    # remove possibility for returning moves that are captured + ko
     def get_actions(self):
         actions = []
         for i in range(NUM_ROWS):
@@ -40,21 +39,10 @@ class MCTSNode:
                 child.action_val + c*child.prior_prob*math.sqrt(self.visits)/(1 + child.visits))
 
     def expand(self, model):
-        # start_time = time.perf_counter()
         p, v = self.evaluate(model)
-        # end_time = time.perf_counter()
-        # elapsed_time = end_time - start_time
-
-        # print(f"E time: {elapsed_time:.4f} seconds")
-        
         for i,j in self.untried_actions:
             new_state = copy.deepcopy(self.game_state)
-            # if(self.game_state.curr_player == "B"):
-            #     new_state.curr_player = "W"
-            # else:
-            #     new_state.curr_player = "B"
             new_state.play_move(new_state.curr_player, i,j)
-            # new_state.board[i][j] = new_state.curr_player
             child = MCTSNode(new_state, parent=self, action=(i, j))
             child.prior_prob = p[i * 9 + j]
             self.children.append(child)
