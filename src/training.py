@@ -53,9 +53,9 @@ model = NeuralNetwork().to(device)
 model.load_state_dict(torch.load("model_params.pth", weights_only=True))
 print(model)
 
-learning_rate = 1e-3
-batch_size = 32
-epochs = 5
+learning_rate = 1e-5
+batch_size = 50
+epochs = 3
 
 def loss_fnc(pred : tuple[int, int], y : tuple[int, int]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     output_p, output_v = pred
@@ -89,19 +89,20 @@ def train_loop(dataloader : DataLoader, model : NeuralNetwork,
         total_norm = 0
         for name, p in model.named_parameters():
             if p.grad is not None:
-                total_norm += p.grad.data.norm(2).item()
-
-        print("grad norm:", total_norm)
+                total_norm += p.grad.data.norm(2).item() ** 2
+        total_norm = total_norm ** 0.5
         optimizer.step()
         if batch % 4 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
             print(f"value loss: {v_loss:>7f}")
             print(f"policy loss: {p_loss:>7f}")
+            print("grad norm:", total_norm)
 
 torch.autograd.set_detect_anomaly(True)
 def train() -> None:
-    for game_num in range(1, 50):
+    for game_num in range(50, 75):
+        print(f"Game {game_num} --------------------------------------")
         model = NeuralNetwork()
         model.load_state_dict(torch.load("model_params.pth", weights_only=True))
         model.eval()
@@ -120,7 +121,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)        
 
         training_data = SelfPlayDataset(
@@ -129,7 +130,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
@@ -138,7 +139,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
@@ -147,7 +148,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
@@ -156,7 +157,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
 
         training_data = SelfPlayDataset(
@@ -165,7 +166,7 @@ def train() -> None:
         )
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
+            print(f"Epoch {t+1}-------------------------------")
             train_loop(train_dataloader, model, loss_fn, optimizer)
         torch.save(model.state_dict(), "model_params.pth")
 train()
